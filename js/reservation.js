@@ -36,6 +36,22 @@ let reservationData = {
     requests: null
 };
 
+// ===== Google Apps Script API設定 =====
+// GOOGLE_APPS_SCRIPT_SETUP.md を参照して設定してください
+const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbwL5P0P4I9mA9efM19RLXJpdW0XPeyOmuQ9LJvnm43OHkwE1dLEbpoY6R0A7QOP7Ee_xA/exec';  // デプロイしたGoogle Apps ScriptのURLを貼り付け（例: 'https://script.google.com/macros/s/XXXXXXXXX/exec'）
+const ENABLE_AUTO_FULLY_BOOKED = true;  // true: 自動判定ON, false: 手動設定のみ
+
+// ===== 満席日設定（手動） =====
+// 自動判定がOFFの場合、または緊急で満席日を追加したい場合はここに追加
+// 形式: 'YYYY-MM-DD' （例: '2025-12-25'）
+const manualFullyBookedDates = [
+    // '2025-12-24',  // クリスマスイブ - 満席（例）
+    // '2025-12-25',  // クリスマス - 満席（例）
+];
+
+// 満席日（自動＋手動を統合）
+let fullyBookedDates = [...manualFullyBookedDates];
+
 // 予約不可日（定休日: 水曜日）
 const closedDays = [3]; // 0=日曜, 1=月曜, ..., 6=土曜
 
@@ -54,10 +70,50 @@ const businessHours = {
 };
 
 // 初期化
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
+    // 自動満席判定が有効な場合、満席日を取得
+    if (ENABLE_AUTO_FULLY_BOOKED && GAS_API_URL) {
+        await fetchFullyBookedDates();
+    }
+
     initCalendar();
     initEventListeners();
 });
+
+// Google Apps Script APIから満席日を取得
+async function fetchFullyBookedDates() {
+    try {
+        console.log('満席日を取得中...');
+
+        const url = `${GAS_API_URL}?action=getFullyBookedDates&timestamp=${Date.now()}`;
+
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (result.success && Array.isArray(result.data)) {
+            // 手動設定と自動取得を統合
+            fullyBookedDates = [...new Set([...manualFullyBookedDates, ...result.data])];
+            console.log('満席日を取得しました:', fullyBookedDates);
+        } else {
+            console.warn('満席日の取得に失敗しました:', result.error);
+        }
+
+    } catch (error) {
+        console.error('満席日の取得エラー:', error);
+        console.log('手動設定の満席日のみ使用します');
+        fullyBookedDates = [...manualFullyBookedDates];
+    }
+}
 
 // カレンダー初期化
 function initCalendar() {
@@ -96,8 +152,10 @@ function renderCalendar() {
     for (let day = 1; day <= daysInMonth; day++) {
         const date = new Date(year, month, day);
         const dayOfWeek = date.getDay();
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const isPast = date < today;
         const isClosed = closedDays.includes(dayOfWeek);
+        const isFullyBooked = fullyBookedDates.includes(dateStr);
         const isSelected = selectedDate &&
                           selectedDate.getDate() === day &&
                           selectedDate.getMonth() === month &&
@@ -106,14 +164,13 @@ function renderCalendar() {
         let classes = 'calendar-date';
         if (isPast) classes += ' past';
         else if (isClosed) classes += ' closed';
+        else if (isFullyBooked) classes += ' fully-booked';
         else classes += ' available';
         if (isSelected) classes += ' selected';
         if (dayOfWeek === 0) classes += ' sunday';
         if (dayOfWeek === 6) classes += ' saturday';
 
-        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-
-        calendarHTML += `<div class="${classes}" data-date="${dateStr}" data-available="${!isPast && !isClosed}">${day}</div>`;
+        calendarHTML += `<div class="${classes}" data-date="${dateStr}" data-available="${!isPast && !isClosed && !isFullyBooked}">${day}</div>`;
     }
 
     calendarHTML += '</div>';
