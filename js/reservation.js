@@ -8,7 +8,7 @@ const GOOGLE_FORM_CONFIG = {
 
     // 各質問のentry IDを設定（GOOGLE_FORM_SETUP.mdの手順3参照）
     entries: {
-        date: 'entry.1854835807.',        // 予約日時のentry ID
+        date: 'entry.1854835807',        // 予約日時のentry ID
         time: 'entry.508842742',        // 予約時間のentry ID
         guests: 'entry.1436268677',      // 人数のentry ID
         course: 'entry.465794597',      // コースのentry ID
