@@ -4,7 +4,7 @@
 // GOOGLE_FORM_SETUP.md を参照して以下を設定してください
 const GOOGLE_FORM_CONFIG = {
     // Googleフォームを作成後、ここにフォームIDを設定
-    formId: '1cAvRmsZqw0zffZZOAe7OU1-STeaaDTqiwDjE0WYq9R4',  // 例: '1FAIpQLSc_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+    formId: '1FAIpQLSeR_8t8vea0cEzUG1uztwAq0y2VMzbiptSN2ryE4qGOnMC4mA',  // 例: '1FAIpQLSc_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
 
     // 各質問のentry IDを設定（GOOGLE_FORM_SETUP.mdの手順3参照）
     entries: {

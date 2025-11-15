@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Googleフォーム送信テスト</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 5px 10px 0;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            display: none;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .step {
+            margin: 10px 0;
+            padding: 10px;
+            background: #fff;
+            border-left: 3px solid #4CAF50;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Googleフォーム送信デバッグテスト</h1>
+
+        <div class="info-box">
+            <strong>このページの目的：</strong><br>
+            予約システムからGoogleフォームへの送信が正しく動作しているか確認します。
+        </div>
+
+        <div class="step">
+            <h3>ステップ1: 設定確認</h3>
+            <p>現在の設定:</p>
+            <div id="config"></div>
+        </div>
+
+        <div class="step">
+            <h3>ステップ2: テスト送信</h3>
+            <p>以下のボタンをクリックしてテストデータを送信します。</p>
+            <button id="testBtn" onclick="sendTestData()">テストデータを送信</button>
+            <button onclick="clearLog()">ログをクリア</button>
+        </div>
+
+        <div class="step">
+            <h3>ステップ3: ログ</h3>
+            <div class="log" id="log"></div>
+        </div>
+
+        <div id="result"></div>
+
+        <div class="step">
+            <h3>次にすること</h3>
+            <ol>
+                <li>「テストデータを送信」ボタンをクリック</li>
+                <li>ログを確認（エラーがあれば赤字で表示されます）</li>
+                <li><strong>Googleスプレッドシートを開いて</strong>、新しい行が追加されているか確認</li>
+                <li>メールボックスを確認</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        // reservation.jsと同じ設定
+        const GOOGLE_FORM_CONFIG = {
+            formId: '1FAIpQLSeR_8t8vea0cEzUG1uztwAq0y2VMzbiptSN2ryE4qGOnMC4mA',
+            entries: {
+                date: 'entry.1854835807',
+                time: 'entry.508842742',
+                guests: 'entry.1436268677',
+                course: 'entry.465794597',
+                name: 'entry.1387828492',
+                nameKana: 'entry.669712672',
+                email: 'entry.358414579',
+                phone: 'entry.1791113540',
+                requests: 'entry.578940633'
+            }
+        };
+
+        // ログ出力
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'error' ? 'red' : type === 'success' ? 'green' : 'black';
+            logDiv.innerHTML += `<div style="color: ${color}">[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+            document.getElementById('result').style.display = 'none';
+        }
+
+        // 設定表示
+        window.onload = function() {
+            const configDiv = document.getElementById('config');
+            const formUrl = `https://docs.google.com/forms/d/e/${GOOGLE_FORM_CONFIG.formId}/formResponse`;
+
+            configDiv.innerHTML = `
+                <p><strong>フォームID:</strong> ${GOOGLE_FORM_CONFIG.formId}</p>
+                <p><strong>送信先URL:</strong> <br><small>${formUrl}</small></p>
+                <p><strong>Entry IDs:</strong></p>
+                <ul style="font-size: 12px; margin: 5px 0;">
+                    <li>date: ${GOOGLE_FORM_CONFIG.entries.date}</li>
+                    <li>time: ${GOOGLE_FORM_CONFIG.entries.time}</li>
+                    <li>guests: ${GOOGLE_FORM_CONFIG.entries.guests}</li>
+                    <li>course: ${GOOGLE_FORM_CONFIG.entries.course}</li>
+                    <li>name: ${GOOGLE_FORM_CONFIG.entries.name}</li>
+                    <li>nameKana: ${GOOGLE_FORM_CONFIG.entries.nameKana}</li>
+                    <li>email: ${GOOGLE_FORM_CONFIG.entries.email}</li>
+                    <li>phone: ${GOOGLE_FORM_CONFIG.entries.phone}</li>
+                    <li>requests: ${GOOGLE_FORM_CONFIG.entries.requests}</li>
+                </ul>
+            `;
+
+            log('デバッグページを読み込みました', 'success');
+            log('設定を確認してください');
+        };
+
+        async function sendTestData() {
+            const btn = document.getElementById('testBtn');
+            btn.disabled = true;
+            btn.textContent = '送信中...';
+            clearLog();
+
+            log('=== テスト送信を開始します ===', 'info');
+
+            try {
+                // テストデータ
+                const testData = {
+                    date: new Date(),
+                    time: '12:00',
+                    guests: '2',
+                    course: 'テストコース',
+                    name: 'テスト 太郎',
+                    nameKana: 'テスト タロウ',
+                    email: 'test@example.com',
+                    phone: '090-1234-5678',
+                    requests: 'デバッグテスト送信'
+                };
+
+                log('テストデータ: ' + JSON.stringify(testData, null, 2));
+
+                // フォームURL構築
+                const formUrl = `https://docs.google.com/forms/d/e/${GOOGLE_FORM_CONFIG.formId}/formResponse`;
+                log('送信先URL: ' + formUrl);
+
+                // 日付フォーマット
+                const date = new Date(testData.date);
+                const dateStr = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日（${['日', '月', '火', '水', '木', '金', '土'][date.getDay()]}）`;
+                log('フォーマット済み日付: ' + dateStr);
+
+                // フォームデータ作成
+                const formData = new FormData();
+                formData.append(GOOGLE_FORM_CONFIG.entries.date, dateStr);
+                formData.append(GOOGLE_FORM_CONFIG.entries.time, testData.time);
+                formData.append(GOOGLE_FORM_CONFIG.entries.guests, testData.guests + '名');
+                formData.append(GOOGLE_FORM_CONFIG.entries.course, testData.course);
+                formData.append(GOOGLE_FORM_CONFIG.entries.name, testData.name);
+                formData.append(GOOGLE_FORM_CONFIG.entries.nameKana, testData.nameKana);
+                formData.append(GOOGLE_FORM_CONFIG.entries.email, testData.email);
+                formData.append(GOOGLE_FORM_CONFIG.entries.phone, testData.phone);
+                formData.append(GOOGLE_FORM_CONFIG.entries.requests, testData.requests);
+
+                log('FormDataを作成しました');
+
+                // 送信するデータをログ出力
+                log('=== 送信するデータ ===');
+                for (let [key, value] of formData.entries()) {
+                    log(`  ${key} = ${value}`);
+                }
+
+                log('Googleフォームへ送信中...');
+
+                // 送信
+                const response = await fetch(formUrl, {
+                    method: 'POST',
+                    body: formData,
+                    mode: 'no-cors'
+                });
+
+                log('fetch完了 (no-corsモードのため詳細は不明)', 'info');
+                log('=== 送信完了 ===', 'success');
+
+                // 結果表示
+                const resultDiv = document.getElementById('result');
+                resultDiv.className = 'success';
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = `
+                    <h3>✅ 送信が完了しました</h3>
+                    <p><strong>次の確認事項：</strong></p>
+                    <ol>
+                        <li><strong>Googleスプレッドシートを開く</strong><br>
+                            <a href="https://docs.google.com/spreadsheets" target="_blank" style="color: #2196F3;">https://docs.google.com/spreadsheets</a><br>
+                            最新のスプレッドシートに新しい行が追加されているか確認
+                        </li>
+                        <li><strong>メールボックスを確認</strong><br>
+                            suzuki199534st@gmail.com にメールが届いているか確認<br>
+                            ※届いていない場合は迷惑メールフォルダも確認
+                        </li>
+                        <li><strong>Googleフォームの回答を確認</strong><br>
+                            <a href="https://docs.google.com/forms/d/${GOOGLE_FORM_CONFIG.formId}/edit#responses" target="_blank" style="color: #2196F3;">フォームの回答タブを開く</a><br>
+                            回答が1件増えているか確認
+                        </li>
+                    </ol>
+                    <p style="margin-top: 20px; padding: 10px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px;">
+                        <strong>⚠️ 重要:</strong> no-corsモードのため、送信が成功したかエラーが発生したかをJavaScriptで判定できません。
+                        上記のリンクから実際に確認してください。
+                    </p>
+                `;
+
+                log('上記のリンクから結果を確認してください', 'info');
+
+            } catch (error) {
+                log('エラーが発生しました: ' + error.message, 'error');
+                console.error('Error:', error);
+
+                const resultDiv = document.getElementById('result');
+                resultDiv.className = 'error';
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = `
+                    <h3>❌ エラーが発生しました</h3>
+                    <p><strong>エラー内容:</strong> ${error.message}</p>
+                    <p>このエラーメッセージのスクリーンショットを共有してください。</p>
+                `;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'テストデータを送信';
+            }
+        }
+    </script>
+</body>
+</html>
